@@ -1,0 +1,9 @@
+ext {
+    moduleLibraryName = "zygisk-aov-modmenu"
+    magiskModuleId = "zygisk-aov-modmenu"
+    moduleName = "AOV Mod Menu"
+    moduleAuthor = "Kinocrp"
+    moduleDescription = "Zygisk Mod Menu For Arena Of Valor."
+    moduleVersion = "v1.0.0"
+    moduleVersionCode = 1
+}
