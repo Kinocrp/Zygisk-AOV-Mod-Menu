@@ -28,7 +28,7 @@ struct ActorSmoothState {
 
 // Values
 int64_t HostUUID = 0;
-int32_t HostObjID = 0;
+int32_t HostObjectID = 0;
 int32_t HostBillboardID = 28;
 int32_t HostPersonalButtonID = 26;
 int32_t HostHeroID = 0;
@@ -81,7 +81,7 @@ void h_HandlePlayerInfo(Il2CppObject *playerInfo, const MethodInfo *method) {
     auto astChoiceHero = il2cpp_field_get_offset(il2cpp_class_get_field_from_name(COMDT_PLAYERINFO, "astChoiceHero"));
     auto astChoiceHeroArr = get_field_value<Il2CppArray*>(playerInfo, astChoiceHero);
     auto astChoiceHeroObj = (Il2CppObject*)astChoiceHeroArr->vector[0];
-    HostObjID = (int32_t)get_field_value<uint32_t>(playerInfo, dwObjId);
+    HostObjectID = (int32_t)get_field_value<uint32_t>(playerInfo, dwObjId);
 
     auto COMDT_CHOICEHERO = il2cpp_object_get_class(astChoiceHeroObj);
     auto stBaseInfo = il2cpp_field_get_offset(il2cpp_class_get_field_from_name(COMDT_CHOICEHERO, "stBaseInfo"));
@@ -190,7 +190,7 @@ void h_Spawned(Il2CppObject *_this, Il2CppObject *battle, VInt3 pos, VInt3 dir, 
     auto ActorCamp = get_field_value<int32_t>(meta, ActorMeta_ActorCamp, true);
     if (ActorType == 0) {
         auto PlayerId = get_field_value<int32_t>(meta, ActorMeta_PlayerId, true);
-        if (PlayerId == HostObjID && menu_config.IsModSkin) set_field_value(meta, ActorMeta_SkinID, 0, true);
+        if (PlayerId == HostObjectID && menu_config.IsModSkin) set_field_value(meta, ActorMeta_SkinID, 0, true);
         auto ConfigId = get_field_value<int32_t>(meta, ActorMeta_ConfigId, true);
         size_t gchandle = il2cpp_gchandle_new(_this, false);
         ESPManager.Add(ESPType::Hero, (int)gchandle, nullptr, gchandle, il2cpp_string_to_std_string(GetHeroName(ConfigId, nullptr)));
@@ -345,7 +345,7 @@ void CalculateESP(Il2CppObject *_this) {
                 float speedVal = sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
                 float predX, predZ;
 
-                if (speedVal > 18000.0f) {
+                if (speedVal > 21000.0f) {
                     float vX = (speedVal > 0) ? (velocity.x / speedVal) : 0;
                     float vZ = (speedVal > 0) ? (velocity.z / speedVal) : 0;
                     predX = smoothLocation.x + (vX * 500.0f);
@@ -437,6 +437,42 @@ void h_set_GameSvrPing(Il2CppObject *_this, int32_t value, const MethodInfo *met
     o_set_GameSvrPing(_this, value, method);
 }
 
+Il2CppObject *(*o_GetPlayer)(Il2CppObject*, uint32_t, const MethodInfo*) = nullptr;
+Il2CppObject *h_GetPlayer(Il2CppObject *_this, uint32_t inPlayerID, const MethodInfo *method) {
+    auto ret = o_GetPlayer(_this, inPlayerID, method);
+
+    if (ret) {
+        auto PlayerBase = il2cpp_object_get_class(ret);
+        auto Computer = il2cpp_field_get_offset(il2cpp_class_get_field_from_name(PlayerBase, "Computer"));
+        auto IsServerAIAgent = il2cpp_field_get_offset(il2cpp_class_get_field_from_name(PlayerBase, "IsServerAIAgent"));
+        auto bServerAI = il2cpp_field_get_offset(il2cpp_class_get_field_from_name(PlayerBase, "bServerAI"));
+
+        auto Name = il2cpp_field_get_offset(il2cpp_class_get_field_from_name(PlayerBase, "Name"));
+        auto mFullNickName = il2cpp_field_get_offset(il2cpp_class_get_field_from_name(PlayerBase, "mFullNickName"));
+        if (get_field_value<bool>(ret, IsServerAIAgent) || get_field_value<bool>(ret, bServerAI)) {
+            set_field_value(ret, Name, il2cpp_string_new("AI (Server)"));
+            set_field_value(ret, mFullNickName, il2cpp_string_new("AI (Server)"));
+        } else if (get_field_value<bool>(ret, Computer)) {
+            set_field_value(ret, Name, il2cpp_string_new("AI (Local)"));
+            set_field_value(ret, mFullNickName, il2cpp_string_new("AI (Local)"));
+        } else {
+            if (menu_config.IsHideName) {
+                auto PlayerId = il2cpp_field_get_offset(il2cpp_class_get_field_from_name(PlayerBase, "PlayerId"));
+                auto PlayerUId = il2cpp_field_get_offset(il2cpp_class_get_field_from_name(PlayerBase, "PlayerUId"));
+                if (get_field_value<uint32_t>(ret, PlayerId) == HostObjectID || get_field_value<uint64_t>(ret, PlayerUId) == HostUUID) {
+                    set_field_value(ret, Name, il2cpp_string_new("Kinocrp"));
+                    set_field_value(ret, mFullNickName, il2cpp_string_new("Kinocrp"));
+                } else {
+                    set_field_value(ret, Name, il2cpp_string_new("Player"));
+                    set_field_value(ret, mFullNickName, il2cpp_string_new("Player"));
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+
 void il2cpp_hook() {
     // Domain
     auto domain = il2cpp_domain_get();
@@ -464,6 +500,7 @@ void il2cpp_hook() {
     auto BattleLogic = il2cpp_class_from_name(Project_d, "Assets.Scripts.GameLogic", "BattleLogic");
     auto SkillComponent = il2cpp_class_from_name(Project_d, "Assets.Scripts.GameLogic", "SkillComponent");
     auto LFrameSynchr = il2cpp_class_from_name(Project_Plugins_d, "NucleusDrive.Logic", "LFrameSynchr");
+    auto GamePlayerCenter = il2cpp_class_from_name(Project_Plugins_d, "NucleusDrive.Logic.GameKernal", "GamePlayerCenter");
 
     // Fields
     LActorRoot_TheActorMeta = il2cpp_field_get_offset(il2cpp_class_get_field_from_name(LActorRoot, "TheActorMeta"));
@@ -508,4 +545,7 @@ void il2cpp_hook() {
     DobbyHook((void*)get_method(SkillComponent, "GetIncedSkillAttackRange")->methodPointer, (void*)h_GetIncedSkillAttackRange, (void**)&o_GetIncedSkillAttackRange);
     DobbyHook((void*)get_method(SkillComponent, "SelectSkillTarget")->methodPointer, (void*)h_SelectSkillTarget, (void**)&o_SelectSkillTarget);
     DobbyHook((void*)get_method(LFrameSynchr, "set_GameSvrPing")->methodPointer, (void*)h_set_GameSvrPing, (void**)&o_set_GameSvrPing);
+    DobbyHook((void*)get_method(GamePlayerCenter, "GetPlayer")->methodPointer, (void*)h_GetPlayer, (void**)&o_GetPlayer);
+
+    // Test
 }

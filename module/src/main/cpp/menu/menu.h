@@ -228,6 +228,7 @@ void menu_draw(ImGuiIO &io, ImGuiStyle &style) {
             ImGui::Checkbox("Reach", &menu_config.IsReach);
             ImGui::Checkbox("Aimbot", &menu_config.IsAimbot);
             ImGui::Checkbox("Mod Skin", &menu_config.IsModSkin);
+            ImGui::Checkbox("Hide Name", &menu_config.IsHideName);
             ImGui::SliderFloat("Drone View", &menu_config.CameraHeight, 0.0f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 
             ImGui::SetCursorPosY(ImGui::GetWindowHeight() - ImGui::GetFrameHeight() - style.WindowPadding.y);
@@ -311,7 +312,8 @@ void menu_esp() {
     }
 }
 
-void menu_render() {
+EGLBoolean (*o_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface) = nullptr;
+EGLBoolean h_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     if (!menu_inited) {
         auto domain = il2cpp_domain_get();
         il2cpp_thread_attach(domain);
@@ -347,4 +349,6 @@ void menu_render() {
 
     glViewport(last_viewport[0], last_viewport[1], last_viewport[2], last_viewport[3]);
     glScissor(last_scissor_box[0], last_scissor_box[1], last_scissor_box[2], last_scissor_box[3]);
+
+    return o_eglSwapBuffers(dpy, surface);
 }

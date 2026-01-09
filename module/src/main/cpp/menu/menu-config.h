@@ -8,6 +8,7 @@ struct MenuConfig {
     bool IsReach = false;
     bool IsAimbot = true;
     bool IsModSkin = true;
+    bool IsHideName = true;
     float CameraHeight = 0.4f;
 };
 
@@ -17,7 +18,7 @@ extern MenuConfig menu_config;
 extern ESP ESPManager;
 
 extern int64_t HostUUID;
-extern int32_t HostObjID;
+extern int32_t HostObjectID;
 extern int32_t HostBillboardID;
 extern int32_t HostPersonalButtonID;
 extern int32_t HostHeroID;

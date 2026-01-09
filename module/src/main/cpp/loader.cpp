@@ -152,10 +152,6 @@ bool NativeBridgeLoad(const char *game_data_dir, int api_level, void *data, size
     return false;
 }
 
-void eglSwapBuffers_handler(void *addr, DobbyRegisterContext *ctx) {
-    menu_render();
-}
-
 void bypass_start() {
     while (true) {
         void *handle = xdl_open("libanogs.so", 0);
@@ -179,7 +175,9 @@ void hack_start(const char *game_data_dir) {
         }
         usleep(100000);
     }
-    DobbyInstrument(DobbySymbolResolver(nullptr, "eglSwapBuffers"), eglSwapBuffers_handler);
+    auto libEGL = xdl_open("libEGL.so", XDL_TRY_FORCE_LOAD);
+    auto eglSwapBuffers = xdl_sym(libEGL, "eglSwapBuffers", nullptr);
+    DobbyHook(eglSwapBuffers, (void*)h_eglSwapBuffers, (void**)&o_eglSwapBuffers);
 }
 
 void hack_prepare(const char *game_data_dir, void *data, size_t length) {
